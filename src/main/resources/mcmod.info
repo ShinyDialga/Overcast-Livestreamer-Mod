@@ -1,0 +1,14 @@
+[
+{
+  "modid": "streamermod",
+  "name": "Unofficial Overcast Streamer Mod",
+  "description": "Gives oc.tc streamers extra tools.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "updateUrl": "",
+  "authorList": ["ShinyDialga"],
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
