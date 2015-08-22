@@ -34,6 +34,6 @@ public class RenderListener {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent(priority = EventPriority.NORMAL)
     public void onServerChat(ClientChatReceivedEvent event) {
-        System.out.println("sneezy" + event.message.getFormattedText());
+
     }
 }
