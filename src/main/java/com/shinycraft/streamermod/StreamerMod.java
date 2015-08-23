@@ -4,6 +4,7 @@ import com.shinycraft.streamermod.listeners.RenderListener;
 import com.shinycraft.streamermod.renderer.ModRenderer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -25,6 +26,7 @@ public class StreamerMod
     @EventHandler
     public void init(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(RenderListener.instance);
+        FMLCommonHandler.instance().bus().register(new GameModeKeyBind());
     }
 
     @EventHandler

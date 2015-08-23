@@ -4,6 +4,7 @@ import com.shinycraft.streamermod.renderer.ModRenderer;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -31,9 +32,4 @@ public class RenderListener {
         ModRenderer.teams.clear();
     }
 
-    @SideOnly(Side.CLIENT)
-    @SubscribeEvent(priority = EventPriority.NORMAL)
-    public void onServerChat(ClientChatReceivedEvent event) {
-
-    }
 }
