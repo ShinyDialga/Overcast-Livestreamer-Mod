@@ -3,6 +3,8 @@ package com.shinycraft.streamermod.renderer;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Ordering;
 import com.shinycraft.streamermod.StreamerMod;
+import com.shinycraft.streamermod.listeners.RenderListener;
+import com.shinycraft.streamermod.utils.FileUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.network.NetHandlerPlayClient;
@@ -15,13 +17,12 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.WorldSettings;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.apache.commons.io.FileUtils;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.List;
 
 /**
  * Created by ShinyDialga45 on 8/12/2015.
@@ -29,7 +30,12 @@ import java.util.*;
 public class ModRenderer {
     private static Minecraft mc = Minecraft.getMinecraft();
     public static List<ScorePlayerTeam> teams = new ArrayList<ScorePlayerTeam>();
-    private static Map<NetworkPlayerInfo, ScorePlayerTeam> playerTeams = new HashMap<NetworkPlayerInfo, ScorePlayerTeam>();
+    public static Map<NetworkPlayerInfo, ScorePlayerTeam> playerTeams = new HashMap<NetworkPlayerInfo, ScorePlayerTeam>();
+    public static Map<NetworkPlayerInfo, Long> deadPlayers = new HashMap<NetworkPlayerInfo, Long>();
+    public static Map<String, ScorePlayerTeam> playerNameTeams = new HashMap<String, ScorePlayerTeam>();
+
+
+    public static org.jdom2.Document currentDocument = null;
 
     public static void renderToHud() {
         if ((mc.inGameHasFocus ||
@@ -59,31 +65,45 @@ public class ModRenderer {
                         if (!teams.contains(team) && teams.size() == 0) {
                             teams.add(team);
                             try {
-                                    byte[] encoded = Files.readAllBytes(Paths.get(StreamerMod.team1File.getAbsolutePath()));
-                                    String file = new String(encoded, StandardCharsets.UTF_8);
-                                    if (!file.equals(teams.get(0).func_96669_c())) {
-                                        FileUtils.writeStringToFile(new File(StreamerMod.team1File.getAbsolutePath()), teams.get(0).func_96669_c());
-                                    }
-
+                                FileUtil.stringToFile(teams.get(0).func_96669_c(), StreamerMod.team1File.getAbsolutePath());
                             } catch (Exception ignored) {
 
                             }
                             try {
-                                if (team != null) {
+                                if (team != null && StreamerMod.playerDisplay) {
                                     fontRenderer.drawStringWithShadow(team.func_96669_c(), x1, StreamerMod.defaultYLevel - 16, teamColor.hex);
                                     fontRenderer.drawStringWithShadow("-----", x1, StreamerMod.defaultYLevel - 8, Color.GRAY.hex);
                                 }
                             } catch (Exception ignored) {
 
                             }
+                            try {
+                                if (currentDocument == null || !currentDocument.equals(RenderListener.document)) {
+                                    BufferedImage output = ImageIO.read(StreamerMod.team1ColorOutput);
+                                    int imageint = output.getRGB(0, 0);
+                                    java.awt.Color imageRGB = new java.awt.Color(imageint);
+                                    if (!(imageRGB.equals(teamColor.getColor()))) {
+                                        BufferedImage image = ImageIO.read(StreamerMod.team1ColorInput);
+                                        for(int y = 0; y < image.getHeight(); y++) {
+                                            for (int x = 0; x < image.getWidth(); x++) {
+                                                int pixelRGB = output.getRGB(x, y);
+                                                if (((pixelRGB>>24) & 0xff) >= 100) {
+                                                    java.awt.Color color = teamColor.getColor();
+                                                    //mix imageColor and desired color
+                                                    output.setRGB(x, y, color.getRGB());
+                                                }
+                                            }
+                                        }
+                                        ImageIO.write(output, "png", StreamerMod.team1ColorOutput);
+                                    }
+                                }
+                            } catch (Exception e) {
+
+                            }
                         } else if (!teams.contains(team) && teams.size() == 1) {
                             teams.add(team);
                             try {
-                                    byte[] encoded = Files.readAllBytes(Paths.get(StreamerMod.team2File.getAbsolutePath()));
-                                    String file = new String(encoded, StandardCharsets.UTF_8);
-                                    if (!file.equals(teams.get(1).func_96669_c())) {
-                                        FileUtils.writeStringToFile(new File(StreamerMod.team2File.getAbsolutePath()), teams.get(1).func_96669_c());
-                                    }
+                                FileUtil.stringToFile(teams.get(1).func_96669_c(), StreamerMod.team2File.getAbsolutePath());
                             } catch (Exception ignored) {
 
                             }
@@ -97,6 +117,30 @@ public class ModRenderer {
                             } catch (Exception ignored) {
 
                             }
+                            try {
+                                if (currentDocument == null || !currentDocument.equals(RenderListener.document)) {
+                                    currentDocument = RenderListener.document;
+                                    BufferedImage output = ImageIO.read(StreamerMod.team2ColorOutput);
+                                    int imageint = output.getRGB(0, 0);
+                                    java.awt.Color imageRGB = new java.awt.Color(imageint);
+                                    if (!(imageRGB.equals(teamColor.getColor()))) {
+                                        BufferedImage image = ImageIO.read(StreamerMod.team2ColorInput);
+                                        for(int y = 0; y < image.getHeight(); y++) {
+                                            for (int x = 0; x < image.getWidth(); x++) {
+                                                int pixelRGB = output.getRGB(x, y);
+                                                if (((pixelRGB>>24) & 0xff) >= 100) {
+                                                    java.awt.Color color = teamColor.getColor();
+                                                    //mix imageColor and desired color
+                                                    output.setRGB(x, y, color.getRGB());
+                                                }
+                                            }
+                                        }
+                                        ImageIO.write(output, "png", StreamerMod.team2ColorOutput);
+                                    }
+                                }
+                            } catch (Exception e) {
+
+                            }
                         }
                     }
                 } catch (Exception ignored) {
@@ -104,52 +148,88 @@ public class ModRenderer {
                 }
             }
 
-            if (StreamerMod.scoreboard) {
-                try {
-                    List<Score> scores = new ArrayList(Minecraft.getMinecraft().thePlayer.getWorldScoreboard().getScores());
-                    Collections.sort(scores, new Comparator<Score>() {
-                        @Override
-                        public int compare(Score o1, Score o2) {
-                            if (o1.getScorePoints() < o2.getScorePoints()) {
-                                return 1;
-                            }
-                            return 0;
-                        }
-                    });
-
-                    for (Score score : scores) {
-                        Minecraft.getMinecraft().thePlayer.getWorldScoreboard().setObjectiveInDisplaySlot(score.getScorePoints(), null);
-                        ScorePlayerTeam displayTeam = score.getScoreScoreboard().getPlayersTeam(score.getPlayerName());
-                        try {
-                            String line = displayTeam.getColorPrefix() + displayTeam.getColorSuffix();
-                            fontRenderer.drawStringWithShadow(line, x1, y1, 0xffffff);
-                            y1 = y1 + 9;
-                            x2 = width - 2 - fontRenderer.getStringWidth(displayTeam.getColorPrefix() + displayTeam.getColorSuffix());
-                            fontRenderer.drawStringWithShadow(line, x2, y2, 0xffffff);
-                            y2 = y2 + 9;
-                        } catch (Exception ignored) {
-
-                        }
-                        try {
-                            if (displayTeam.getColorPrefix().contains(teams.get(0).func_96669_c())) {
-                                byte[] encoded = Files.readAllBytes(Paths.get(StreamerMod.team1File.getAbsolutePath()));
-                                String file = new String(encoded, StandardCharsets.UTF_8);
-                                if (!file.equals(teams.get(0).func_96669_c())) {
-                                    FileUtils.writeStringToFile(new File(StreamerMod.team1File.getAbsolutePath()), teams.get(0).func_96669_c());
+            if (StreamerMod.playerDisplay) {
+                for (NetworkPlayerInfo player : list) {
+                    try {
+                        if (!player.getGameProfile().getName().contains("-")) {
+                            ScorePlayerTeam team = player.getPlayerTeam();
+                            try {
+                                if (!team.getColorPrefix().contains(EnumChatFormatting.DARK_GRAY.toString()) && !playerNameTeams.get(player.getGameProfile().getName()).equals(team)) {
+                                    playerTeams.put(player, team);
+                                    playerNameTeams.put(player.getGameProfile().getName(), team);
                                 }
-                            } else if (displayTeam.getColorPrefix().contains(teams.get(1).func_96669_c())) {
-                                byte[] encoded = Files.readAllBytes(Paths.get(StreamerMod.team2File.getAbsolutePath()));
-                                String file = new String(encoded, StandardCharsets.UTF_8);
-                                if (!file.equals(teams.get(1).func_96669_c())) {
-                                    FileUtils.writeStringToFile(new File(StreamerMod.team2File.getAbsolutePath()), teams.get(1).func_96669_c());
-                                }
+                            } catch (Exception ignored) {
+                                playerTeams.put(player, team);
+                                playerNameTeams.put(player.getGameProfile().getName(), team);
                             }
-                        } catch (Exception ignored) {
-
                         }
+                    } catch (Exception ignored) {
+
                     }
-                } catch (Exception ignored) {
+                }
+                for (NetworkPlayerInfo player : playerTeams.keySet()) {
+                    try {
+                        if (!player.getGameProfile().getName().contains("-")) {
+                        /*if (mc.theWorld.getPlayerEntityByUUID(player.getGameProfile().getId()) == null) {
+                            if (!deadPlayers.containsKey(player)) {
+                                deadPlayers.put(player, System.currentTimeMillis());
+                            } else if (System.currentTimeMillis() > (deadPlayers.get(player) + 15000) || team != null) {
+                                deadPlayers.remove(player);
+                                playerNameTeams.remove(player.getGameProfile().getName());
+                                removePlayers.add(player);
+                                continue;
+                            }
+                        } else {
+                            deadPlayers.remove(player);
+                        }*/
+                            try {
+                                GlStateManager.enableAlpha();
+                                GlStateManager.enableBlend();
+                                GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+                                String name;
+                                try {
+                                    name = getName(player);
+                                } catch (Exception e) {
+                                    name = EnumChatFormatting.DARK_GRAY.toString() + player.getGameProfile().getName();
+                                }
+                                if (deadPlayers.containsKey(player)) {
+                                    name = EnumChatFormatting.DARK_GRAY.toString() + player.getGameProfile().getName();
+                                }
+                                ScorePlayerTeam team = player.getPlayerTeam();
+                                Color teamColor = Color.getColor(team.getColorPrefix().charAt(team.getColorPrefix().length() - 1));
+                                if (!name.contains(teamColor.getChatColor()) || teamColor.equals(Color.AQUA)) {
+                                    continue;
+                                }
+                                if (playerTeams.get(player).equals(teams.get(0))) {
+                                    Minecraft.getMinecraft().getTextureManager().bindTexture(player.getLocationSkin());
+                                    x1 = 2;
+                                    Gui.drawScaledCustomSizeModalRect(x1, y1, 8.0F, 8.0F, 8, 8, 8, 8, 64.0F, 64.0F);
+                                    EntityPlayer entityplayer = Minecraft.getMinecraft().theWorld.getPlayerEntityByUUID(player.getGameProfile().getId());
+                                    if (entityplayer != null && entityplayer.func_175148_a(EnumPlayerModelParts.HAT)) {
+                                        Gui.drawScaledCustomSizeModalRect(x1, y1, 40.0F, 8.0F, 8, 8, 8, 8, 64.0F, 64.0F);
+                                    }
+                                    x1 = 11;
+                                    fontRenderer.drawStringWithShadow(name, x1, y1, 0xffffff);
+                                    y1 = y1 + 9;
+                                } else if (playerTeams.get(player).equals(teams.get(1))) {
+                                    Minecraft.getMinecraft().getTextureManager().bindTexture(player.getLocationSkin());
+                                    x2 = width - 10;
+                                    Gui.drawScaledCustomSizeModalRect(x2, y2, 8.0F, 8.0F, 8, 8, 8, 8, 64.0F, 64.0F);
+                                    EntityPlayer entityplayer = Minecraft.getMinecraft().theWorld.getPlayerEntityByUUID(player.getGameProfile().getId());
+                                    if (entityplayer != null && entityplayer.func_175148_a(EnumPlayerModelParts.HAT)) {
+                                        Gui.drawScaledCustomSizeModalRect(x2, y2, 40.0F, 8.0F, 8, 8, 8, 8, 64.0F, 64.0F);
+                                    }
+                                    x2 = width - fontRenderer.getStringWidth(name) - 11;
+                                    fontRenderer.drawStringWithShadow(name, x2, y2, 0xffffff);
+                                    y2 = y2 + 9;
+                                }
+                            } catch (Exception ignored) {
 
+                            }
+                        }
+                    } catch (Exception ignored) {
+
+                    }
                 }
             }
 
@@ -171,45 +251,37 @@ public class ModRenderer {
 
             }
 
-            for (NetworkPlayerInfo player : list) {
+            if (StreamerMod.scoreboard) {
                 try {
-                    if (!player.getGameProfile().getName().contains("-")) {
-                        ScorePlayerTeam team = player.getPlayerTeam();
+                    List<Score> scores = new ArrayList(Minecraft.getMinecraft().thePlayer.getWorldScoreboard().getScores());
+                    Collections.sort(scores, new Comparator<Score>() {
+                        @Override
+                        public int compare(Score o1, Score o2) {
+                            if (o1.getScorePoints() < o2.getScorePoints()) {
+                                return 1;
+                            }
+                            return 0;
+                        }
+                    });
+
+                    for (Score score : scores) {
+                        Minecraft.getMinecraft().thePlayer.getWorldScoreboard().setObjectiveInDisplaySlot(score.getScorePoints(), null);
+                        ScorePlayerTeam displayTeam = score.getScoreScoreboard().getPlayersTeam(score.getPlayerName());
                         try {
-                            if (!team.getColorPrefix().contains(EnumChatFormatting.DARK_GRAY.toString())) {
-                                playerTeams.put(player, team);
-                            }
-                            GlStateManager.enableAlpha();
-                            GlStateManager.enableBlend();
-                            GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-                            String name;
-                            try {
-                                name = getName(player);
-                            } catch (Exception e) {
-                                name = player.getGameProfile().getName();
-                            }
-                            if (playerTeams.get(player).equals(teams.get(0))) {
-                                Minecraft.getMinecraft().getTextureManager().bindTexture(player.getLocationSkin());
-                                x1 = 2;
-                                Gui.drawScaledCustomSizeModalRect(x1, y1, 8.0F, 8.0F, 8, 8, 8, 8, 64.0F, 64.0F);
-                                EntityPlayer entityplayer = Minecraft.getMinecraft().theWorld.getPlayerEntityByUUID(player.getGameProfile().getId());
-                                if (entityplayer != null && entityplayer.func_175148_a(EnumPlayerModelParts.HAT)) {
-                                    Gui.drawScaledCustomSizeModalRect(x1, y1, 40.0F, 8.0F, 8, 8, 8, 8, 64.0F, 64.0F);
-                                }
-                                x1 = 11;
-                                fontRenderer.drawStringWithShadow(name, x1, y1, 0xffffff);
-                                y1 = y1 + 9;
-                            } else if (playerTeams.get(player).equals(teams.get(1))) {
-                                Minecraft.getMinecraft().getTextureManager().bindTexture(player.getLocationSkin());
-                                x2 = width - 10;
-                                Gui.drawScaledCustomSizeModalRect(x2, y2, 8.0F, 8.0F, 8, 8, 8, 8, 64.0F, 64.0F);
-                                EntityPlayer entityplayer = Minecraft.getMinecraft().theWorld.getPlayerEntityByUUID(player.getGameProfile().getId());
-                                if (entityplayer != null && entityplayer.func_175148_a(EnumPlayerModelParts.HAT)) {
-                                    Gui.drawScaledCustomSizeModalRect(x2, y2, 40.0F, 8.0F, 8, 8, 8, 8, 64.0F, 64.0F);
-                                }
-                                x2 = width - fontRenderer.getStringWidth(name) - 11;
-                                fontRenderer.drawStringWithShadow(name, x2, y2, 0xffffff);
-                                y2 = y2 + 9;
+                            String line = displayTeam.getColorPrefix() + displayTeam.getColorSuffix();
+                            //fontRenderer.drawStringWithShadow(line, x1, y1, 0xffffff);
+                            //y1 = y1 + 9;
+                            x2 = width - 2 - fontRenderer.getStringWidth(displayTeam.getColorPrefix() + displayTeam.getColorSuffix());
+                            fontRenderer.drawStringWithShadow(line, x2, y2, 0xffffff);
+                            y2 = y2 + 9;
+                        } catch (Exception ignored) {
+
+                        }
+                        try {
+                            if (displayTeam.getColorPrefix().contains(teams.get(0).func_96669_c())) {
+                                FileUtil.stringToFile(teams.get(0).func_96669_c(), StreamerMod.team1File.getAbsolutePath());
+                            } else if (displayTeam.getColorPrefix().contains(teams.get(1).func_96669_c())) {
+                                FileUtil.stringToFile(teams.get(1).func_96669_c(), StreamerMod.team2File.getAbsolutePath());
                             }
                         } catch (Exception ignored) {
 
@@ -219,6 +291,7 @@ public class ModRenderer {
 
                 }
             }
+
         }
     }
 
@@ -227,7 +300,7 @@ public class ModRenderer {
         return player.func_178854_k() != null ? player.func_178854_k().getFormattedText() : ScorePlayerTeam.formatPlayerName(player.getPlayerTeam(), player.getGameProfile().getName());
     }
 
-    private enum Color {
+    public enum Color {
 
         BLACK(0x000000, '0'),
         DARK_BLUE(0x0000AA, '1'),
@@ -254,7 +327,7 @@ public class ModRenderer {
             this.code = code;
         }
 
-        static Color getColor(char code) {
+        public static Color getColor(char code) {
             for (Color color : values()) {
                 if (color.code == code) {
                     return color;
@@ -263,7 +336,11 @@ public class ModRenderer {
             return Color.AQUA;
         }
 
-        String getChatColor() {
+        public java.awt.Color getColor() {
+            return new java.awt.Color(hex);
+        }
+
+        public String getChatColor() {
             return "\u00A7" + code;
         }
 
