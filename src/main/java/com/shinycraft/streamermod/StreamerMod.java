@@ -33,6 +33,8 @@ public class StreamerMod
     public static File team1ColorOutput;
     public static File team2ColorInput;
     public static File team2ColorOutput;
+    public static int chatXLevel = 0;
+    public static int chatYLevel = 291;
 
     public static boolean seePlayerHighlights = false;
     public static ScreenDisplay screenDisplay;
@@ -64,6 +66,8 @@ public class StreamerMod
         team1ColorOutput = new File(config.getString("Team1OverlayOutputFile", Configuration.CATEGORY_GENERAL, "team1overlayoutput.png", "An image that is colored based on team 1's color"));
         team2ColorInput = new File(config.getString("Team2OverlayInputFile", Configuration.CATEGORY_GENERAL, "team2overlayinput.png", "Links the template required for team 2's color changing overlay output"));
         team2ColorOutput = new File(config.getString("Team2OverlayOutputFile", Configuration.CATEGORY_GENERAL, "team2overlayoutput.png", "An image that is colored based on team 2's color"));
+        chatXLevel = config.getInt("ChatXLevel", Configuration.CATEGORY_GENERAL, 0, 0, 1980, "The X coordinate of where the chat is");
+        chatYLevel = config.getInt("ChatYLevel", Configuration.CATEGORY_GENERAL, 291, 0, 1980, "The Y coordinate of where the chat is");
         team1File = new File(team1FileString);
         team2File = new File(team2FileString);
         config.load();

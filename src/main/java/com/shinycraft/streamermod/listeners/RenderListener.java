@@ -4,6 +4,7 @@ import com.shinycraft.streamermod.StreamerMod;
 import com.shinycraft.streamermod.renderer.ModRenderer;
 import com.shinycraft.streamermod.utils.FileUtil;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -85,11 +86,18 @@ public class RenderListener {
 
     @SubscribeEvent
     public void RenderGameOverlayEvent(RenderGameOverlayEvent event) {
+
         // render everything onto the screen
         if (event.type == RenderGameOverlayEvent.ElementType.TEXT) {
             ModRenderer.teams.clear();
             ModRenderer.renderToHud();
         }
+    }
+
+    @SubscribeEvent
+    public void RenderGameOverlayEvent(RenderGameOverlayEvent.Chat event) {
+        event.posX = StreamerMod.chatXLevel;
+        event.posY = StreamerMod.chatYLevel;
     }
 
     World previousWorld = null;
