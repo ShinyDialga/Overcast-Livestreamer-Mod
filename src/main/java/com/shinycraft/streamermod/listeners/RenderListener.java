@@ -8,7 +8,7 @@ import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
+//import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.boss.EntityWither;
 import net.minecraft.entity.player.EntityPlayer;
@@ -38,12 +38,14 @@ public class RenderListener {
     public static RenderListener instance = new RenderListener();
     private static Minecraft mc = Minecraft.getMinecraft();
 
+
+
     @SubscribeEvent
     public void onRenderLiving(RenderPlayerEvent.Pre event)
     {
         try {
             if (StreamerMod.seePlayerHighlights && (mc.playerController.getCurrentGameType().isCreative() || mc.playerController.getCurrentGameType().equals(WorldSettings.GameType.SPECTATOR))) {
-                EntityPlayer entityPlayer = event.entityPlayer;
+                EntityPlayer entityPlayer = event.getEntityPlayer();
                 // System.out.println("12");
                 NetworkPlayerInfo networkPlayerInfo = Minecraft.getMinecraft().getNetHandler().getPlayerInfo(entityPlayer.getUniqueID());
                 if (networkPlayerInfo.getGameProfile().getName().contains("-")) {
@@ -56,9 +58,9 @@ public class RenderListener {
                 if (teamColor.equals(ModRenderer.Color.AQUA)) {
                     return;
                 }
-                double playerX = mc.thePlayer.prevPosX + (mc.thePlayer.posX - mc.thePlayer.prevPosX) * event.partialRenderTick;
-                double playerY = mc.thePlayer.prevPosY + (mc.thePlayer.posY - mc.thePlayer.prevPosY) * event.partialRenderTick;
-                double playerZ = mc.thePlayer.prevPosZ + (mc.thePlayer.posZ - mc.thePlayer.prevPosZ) * event.partialRenderTick;
+                double playerX = mc.thePlayer.prevPosX + (mc.thePlayer.posX - mc.thePlayer.prevPosX) * event.getPartialRenderTick();
+                double playerY = mc.thePlayer.prevPosY + (mc.thePlayer.posY - mc.thePlayer.prevPosY) * event.getPartialRenderTick();
+                double playerZ = mc.thePlayer.prevPosZ + (mc.thePlayer.posZ - mc.thePlayer.prevPosZ) * event.getPartialRenderTick();
                 GL11.glPushMatrix();
 
                 GL11.glDisable(GL11.GL_LIGHTING);
@@ -88,25 +90,28 @@ public class RenderListener {
     public void RenderGameOverlayEvent(RenderGameOverlayEvent event) {
 
         // render everything onto the screen
-        if (event.type == RenderGameOverlayEvent.ElementType.TEXT) {
+        if (event.getType() == RenderGameOverlayEvent.ElementType.TEXT) {
             ModRenderer.teams.clear();
             ModRenderer.renderToHud();
+        }
+        if (event.getType() == RenderGameOverlayEvent.ElementType.BOSSHEALTH) {
+            event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
     public void RenderGameOverlayEvent(RenderGameOverlayEvent.Chat event) {
-        event.posX = StreamerMod.chatXLevel;
-        event.posY = StreamerMod.chatYLevel;
+        event.setPosX(StreamerMod.chatXLevel);
+        event.setPosY(StreamerMod.chatYLevel);
     }
 
-    World previousWorld = null;
+    public static World previousWorld = null;
     long lastUpdate = System.currentTimeMillis();
 
     @SubscribeEvent
     public void playerJoinWorld(EntityJoinWorldEvent event) {
-        if (previousWorld != event.world && System.currentTimeMillis() > (lastUpdate + 3000) && event.entity.equals(Minecraft.getMinecraft().thePlayer)) {
-            previousWorld = event.world;
+        if (previousWorld != event.getWorld() && System.currentTimeMillis() > (lastUpdate + 3000) && event.getEntity().equals(Minecraft.getMinecraft().thePlayer)) {
+            previousWorld = event.getWorld();
             lastUpdate = System.currentTimeMillis();
             Minecraft.getMinecraft().thePlayer.sendChatMessage("/map");
         }
@@ -117,9 +122,9 @@ public class RenderListener {
     @SubscribeEvent
     public void render(RenderWorldLastEvent event)
     {
-        double playerX = mc.thePlayer.prevPosX + (mc.thePlayer.posX - mc.thePlayer.prevPosX) * event.partialTicks;
-        double playerY = mc.thePlayer.prevPosY + (mc.thePlayer.posY - mc.thePlayer.prevPosY) * event.partialTicks;
-        double playerZ = mc.thePlayer.prevPosZ + (mc.thePlayer.posZ - mc.thePlayer.prevPosZ) * event.partialTicks;
+        double playerX = mc.thePlayer.prevPosX + (mc.thePlayer.posX - mc.thePlayer.prevPosX) * event.getPartialTicks();
+        double playerY = mc.thePlayer.prevPosY + (mc.thePlayer.posY - mc.thePlayer.prevPosY) * event.getPartialTicks();
+        double playerZ = mc.thePlayer.prevPosZ + (mc.thePlayer.posZ - mc.thePlayer.prevPosZ) * event.getPartialTicks();
         try {
             if (StreamerMod.coreLeakDistance) {
                 for (Element element : document.getRootElement().getChildren("cores")) {
@@ -184,7 +189,7 @@ public class RenderListener {
                             GL11.glEnable(GL11.GL_BLEND);
                             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
                             GL11.glColor4f(255F, 0F, 0F, 0.5F);
-                            Tessellator tess = Tessellator.getInstance();
+                            /*Tessellator tess = Tessellator.getInstance();
                             WorldRenderer worldRenderer = tess.getWorldRenderer();
                             GlStateManager.pushAttrib();
                             worldRenderer.startDrawingQuads();
@@ -192,7 +197,7 @@ public class RenderListener {
                             worldRenderer.addVertexWithUV(minX, lowestY - coreLeakDistance + 0.05, maxZ, 1, 0.0);
                             worldRenderer.addVertexWithUV(maxX, lowestY - coreLeakDistance + 0.05, maxZ, 0.0, 0.0);
                             worldRenderer.addVertexWithUV(maxX, lowestY - coreLeakDistance + 0.05, minZ, 0.0, 1);
-                            tess.draw();
+                            tess.draw();*/
                             GL11.glDisable(GL11.GL_BLEND);
                             GlStateManager.popAttrib();
                             GlStateManager.popMatrix();
@@ -212,6 +217,8 @@ public class RenderListener {
                 String name = entity.getDisplayName().getFormattedText();
                 if (entity instanceof EntityWither && entity.getDisplayName().getFormattedText().contains(":") && entity.getDisplayName().getFormattedText().contains("Time Remaining")) {
                     FileUtil.stringToFile(name.substring(20, name.length() - 2), StreamerMod.timeFile.getAbsolutePath());
+                    //((EntityWither)entity).setCustomNameTag(" ");
+                    //((EntityWither)entity).setHealth(1);
                     return;
                 }
             }
@@ -228,9 +235,9 @@ public class RenderListener {
     @SubscribeEvent
     public void messageReceived(ClientChatReceivedEvent event) {
         try {
-            String message = event.message.getFormattedText();
+            String message = event.getMessage().getFormattedText();
             if (message.contains("XML")) {
-                String str = message.replaceAll("§", "");
+                String str = message.replaceAll("ï¿½", "");
                 str = str.substring(str.indexOf("https"), str.length() - 2);
                 SAXBuilder builder = new SAXBuilder();
                 InputStream input = new URL(str).openStream();
