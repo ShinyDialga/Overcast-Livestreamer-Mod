@@ -64,6 +64,13 @@ public class StreamerMod
         mapNameFile = new File(config.getString("MapNametxtFile", Configuration.CATEGORY_GENERAL, "mapname.txt", "Shows what map is currently being played"));
         team1ColorInput = new File(config.getString("Team1OverlayInputFile", Configuration.CATEGORY_GENERAL, "team1overlayinput.png", "Links the template required for team 1's color changing overlay output"));
         team1ColorOutput = new File(config.getString("Team1OverlayOutputFile", Configuration.CATEGORY_GENERAL, "team1overlayoutput.png", "An image that is colored based on team 1's color"));
+        try {
+            System.out.println(timeFile.getAbsolutePath() + "crank");
+            System.out.println(timeFile.getCanonicalPath() + "dat");
+            System.out.println(timeFile.getPath() + "souja boy");
+        } catch (Exception e) {
+
+        }
         team2ColorInput = new File(config.getString("Team2OverlayInputFile", Configuration.CATEGORY_GENERAL, "team2overlayinput.png", "Links the template required for team 2's color changing overlay output"));
         team2ColorOutput = new File(config.getString("Team2OverlayOutputFile", Configuration.CATEGORY_GENERAL, "team2overlayoutput.png", "An image that is colored based on team 2's color"));
         chatXLevel = config.getInt("ChatXLevel", Configuration.CATEGORY_GENERAL, 0, 0, 1980, "The X coordinate of where the chat is");
